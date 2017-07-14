@@ -1,0 +1,43 @@
+Project Code, pt. 1
+
+deaths = read.csv('Drugdeaths_2012-2016.csv', sep = ',', na.strings = "NA")
+
+install.packages('ggvis')
+library(ggvis)
+library(dplyr)
+install.packages("tidyr")
+library(tidyr)
+install.packages("ggplot2")
+library(ggplot2)
+new_deaths = separate(deaths, DeathLoc, into=c("city","Lat_Long"), sep="\n")
+new_deaths = separate(new_deaths, Lat_Long, into=c("latitude","longitude"), sep=',')
+new_deaths$latitude = new_deaths %>% select(.,latitude) %>% mutate(.,latitude = substr(latitude,2,10))
+new_deaths$longitude = new_deaths %>% select(.,longitude) %>% mutate(.,longitude = substr(longitude,1,9))
+new_deaths$latitude = as.list(new_deaths$latitude)
+new_deaths$longitude = as.list(new_deaths$longitude)
+new_deaths[new_deaths==""] <- NA
+counties = new_deaths %>%  select(.,-latitude,-longitude) %>% filter(.,!is.na(Residence.County))
+View(counties)
+View(new_deaths)
+
+#Age death count histogram
+g <- ggplot(data = new_deaths, aes(x = Age))
+g + geom_histogram(binwidth = 2, col="blue", 
+                   fill="purple", alpha = .2) + ggtitle('Deaths from Opioid Use by Age')+ ylim(0,250)
+ 
+#Cities and income compared
+Income_tax = read.csv('Income_tax.csv')
+Income_tax = Income_tax %>% filter(.,Tax.Year == '2015') %>% group_by(.,Municipality) %>% rename(.,Residence.City = Municipality)
+
+Income_tax$Tax.Per.Capita = as.numeric(sub('$','',as.character(Income_tax$Tax.Per.Capita),fixed=TRUE))
+Income_tax = Income_tax %>% group_by(.,Residence.City) %>% summarise(.,avg_tax = mean(Tax.Per.Capita))
+Cities_income = left_join(counties, Income_tax, by = 'Residence.City') 
+Cities_income <- Cities_income[!is.na(Cities_income$Tax.Per.Capita),]
+
+#Simple scatter plot
+View(Cities_income)
+Counts = Cities_income %>% group_by(.,Residence.City) %>% summarise(.,Death_Count = n())
+Counts_tax = inner_join(Counts,Income_tax,by = 'Residence.City')
+plot(Counts_tax$Death_Count,Counts_tax$avg_tax)
+cor(Counts_tax$Death_Count,Counts_tax$avg_tax)
+#-0.2462403
