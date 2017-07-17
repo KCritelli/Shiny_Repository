@@ -1,7 +1,7 @@
 Project Code, pt. 1
 
 deaths = read.csv('Drugdeaths_2012-2016.csv', sep = ',', na.strings = "NA")
-
+View(deaths)
 install.packages('ggvis')
 library(ggvis)
 library(dplyr)
@@ -11,33 +11,142 @@ install.packages("ggplot2")
 library(ggplot2)
 new_deaths = separate(deaths, DeathLoc, into=c("city","Lat_Long"), sep="\n")
 new_deaths = separate(new_deaths, Lat_Long, into=c("latitude","longitude"), sep=',')
-new_deaths$latitude = new_deaths %>% select(.,latitude) %>% mutate(.,latitude = substr(latitude,2,10))
-new_deaths$longitude = new_deaths %>% select(.,longitude) %>% mutate(.,longitude = substr(longitude,1,9))
-new_deaths$latitude = as.list(new_deaths$latitude)
-new_deaths$longitude = as.list(new_deaths$longitude)
+new_deaths = new_deaths %>% mutate(.,latitude = substr(latitude,2,10))
+new_deaths = new_deaths %>% mutate(.,longitude = substr(longitude,1,9))
+View(new_deaths)
+
 new_deaths[new_deaths==""] <- NA
 counties = new_deaths %>%  select(.,-latitude,-longitude) %>% filter(.,!is.na(Residence.County))
 View(counties)
 View(new_deaths)
+death_subset = new_deaths %>% select(.,Residence.City,latitude,longitude)
+View(death_subset)
 
 #Age death count histogram
 g <- ggplot(data = new_deaths, aes(x = Age))
 g + geom_histogram(binwidth = 2, col="blue", 
                    fill="purple", alpha = .2) + ggtitle('Deaths from Opioid Use by Age')+ ylim(0,250)
- 
+
 #Cities and income compared
 Income_tax = read.csv('Income_tax.csv')
 Income_tax = Income_tax %>% filter(.,Tax.Year == '2015') %>% group_by(.,Municipality) %>% rename(.,Residence.City = Municipality)
-
+View(Income_tax)
 Income_tax$Tax.Per.Capita = as.numeric(sub('$','',as.character(Income_tax$Tax.Per.Capita),fixed=TRUE))
-Income_tax = Income_tax %>% group_by(.,Residence.City) %>% summarise(.,avg_tax = mean(Tax.Per.Capita))
 Cities_income = left_join(counties, Income_tax, by = 'Residence.City') 
 Cities_income <- Cities_income[!is.na(Cities_income$Tax.Per.Capita),]
-
+Cities_income = Cities_income %>% group_by(.,Residence.City) %>% summarise(.,mean(Tax.Per.Capita))
+income_to_counts = left_join(Counts,Cities_income, by = 'Residence.City')
 #Simple scatter plot
 View(Cities_income)
 Counts = Cities_income %>% group_by(.,Residence.City) %>% summarise(.,Death_Count = n())
+View(Counts)
+Death_heat_map = inner_join(death_subset,Counts,"Residence.City")
 Counts_tax = inner_join(Counts,Income_tax,by = 'Residence.City')
 plot(Counts_tax$Death_Count,Counts_tax$avg_tax)
 cor(Counts_tax$Death_Count,Counts_tax$avg_tax)
 #-0.2462403
+View(Death_heat_map)
+sub = Death_heat_map %>% group_by(.,Residence.City) %>% summarise(.,Counts = n())
+#Mapping
+install.packages('leaflet')
+library(leaflet)
+my_map = leaflet() %>% 
+  addTiles()
+
+my_map = my_map %>% addMarkers(lat = as.numeric(Death_heat_map$latitude), lng = as.numeric(Death_heat_map$longitude),clusterOptions = markerClusterOptions())
+my_map
+
+SAT = read.csv('SAT_Part.csv')
+View(SAT)
+View(death_subset)
+SAT = SAT[c(1:104),] %>% select(.,District,Percent.Meeting.Benchmark..2013) %>% rename(.,Residence.City = District) 
+SAT$Residence.City = toupper(SAT$Residence.City)
+
+#Treatment Admissions Info
+admits = read.csv('Treatment_admissions.csv')
+View(admits)
+admits[admits==""] <- NA
+admits <- admits[!is.na(admits$Admissions),]
+admits = separate(admits, TownGeo, into=c("city","Lat_Long"), sep="\n")
+admits = separate(admits, Lat_Long, into=c("latitude","longitude"), sep=',')
+admits = admits %>% mutate(.,latitude = substr(latitude,2,10))
+admits = admits %>% mutate(.,longitude = substr(longitude,1,9))
+View(admits)
+
+#Mapping2
+library(leaflet)
+treatment_map = leaflet() %>% 
+  addTiles()
+
+treatment_map = treatment_map %>% addMarkers(lat = as.numeric(admits$latitude), lng = as.numeric(admits$longitude),clusterOptions = markerClusterOptions())
+treatment_map
+
+install.packages('plotly')
+library(plotly)
+
+plot_ly(income_to_counts, x = income_to_counts$Death_Count, y = income_to_counts$`mean(Tax.Per.Capita)`, mode = 'markers')
+
+library(ggplot2)
+texas = read.csv("texas.csv") #Change to your working directory.
+head(texas)
+g <- ggplot(data = texas, aes(x = long, y = lat))
+g + geom_point()
+g + geom_polygon(aes(group = group))
+library(maps)
+counties = map_data("county")
+View(counties)
+counties = counties %>% filter(.,region == 'connecticut')
+ggplot(data = counties, aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = group))
+  
+  #################
+  new_deaths[new_deaths==""] <- NA
+
+install.packages('dplyr')
+library(dplyr)
+install.packages("tidyr")
+library(tidyr)
+install.packages("ggplot2")
+library(ggplot2)
+new_deaths = separate(deaths, DeathLoc, into=c("city","Lat_Long"), sep="\n")
+new_deaths = separate(new_deaths, Lat_Long, into=c("latitude","longitude"), sep=',')
+g <- ggplot(data = new_deaths, aes(x = Age))
+g + geom_histogram(binwidth = 5) 
+
+admissions = read.csv('Treatment_admissions.csv')
+View(admissions)
+deaths = read.csv('Drugdeaths_2012-2016.csv', sep = ',', na.strings = "NA")
+deaths <- deaths[!is.na(deaths),]
+View(deaths)
+
+new_deaths = new_deaths %>% mutate(.,latitude = substr(latitude,2,10))
+new_deaths = new_deaths %>% mutate(.,longitude = substr(longitude,1,9))
+View(incometax)
+View(new_deaths)
+new_deaths$latitude = new_deaths %>% select(.,latitude) %>% mutate(.,latitude = substr(latitude,2,10))  
+new_deaths$longitude = new_deaths %>% select(.,longitude) %>% mutate(.,longitude = substr(longitude,1,9))
+
+new_deaths$latitude = as.list(new_deaths$latitude)
+new_deaths$longitude = as.list(new_deaths$longitude)
+View(new_deaths)
+new_deaths %>% filter(.,Residence.County == 'FAIRFIELD')
+View(new_deaths)
+counties = new_deaths %>%  select(.,-latitude,-longitude) %>% filter(.,Residence.County != NA)
+library(ggplot2)
+View()
+
+#Mapping
+install.packages('leaflet')
+library(leaflet)
+my_map = leaflet() %>% 
+  addTiles()
+my_map = my_map %>% addMarkers(lat = as.numeric(new_deaths$latitude), lng = as.numeric(new_deaths$longitude))
+View(Counts)
+my_map
+
+mh = read.csv('DMHAS_mh.csv')
+View(mh)
+mh[mh=="*"] <- NA
+mh = mh %>% filter(.,!is.na(TownYearCount)&FiscalYear == '2015') %>% rename(.,mh_count = TownYearCount, Residence.City = Town) %>% mutate(.,Residence.City = toupper(Residence.City))
+mh_deaths = inner_join(mh, Counts, by = 'Residence.City')
+cor(as.numeric(mh_deaths$mh_count),as.numeric(mh_deaths$Death_Count), method = 'pearson')
