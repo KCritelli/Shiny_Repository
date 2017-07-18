@@ -42,9 +42,30 @@ function(input, output) {
       layout(title = "Correlation: Education (SAT) vs. Proportion Dead", xaxis = xaxis, yaxis = yaxis) 
   })
   
+  output$plot4 = renderPlotly({
+    xaxis <- list(
+      title = "Proportion Dead (Count/Total Population)"
+    )
+    yaxis <- list(
+      title = "Mean Tax per Capita (Proxy Measure for Wealth)"
+    )
+    fit <- lm(cor_income$Tax.Per.Capita ~ cor_income$Proportion, data = cor_income)
+    plot_ly(cor_income, x = cor_income$Proportion,y = cor_income$Tax.Per.Capita, mode = 'markers', text = cor_income$Residence.City) %>% 
+      layout(title = "Correlation: Income (Measure:Tax) vs. Proportion Dead", xaxis = xaxis, yaxis = yaxis) 
+  })
+  
   output$mymap <- renderLeaflet({
     leaflet() %>% 
       addTiles() %>% addMarkers(lat = as.numeric(new_deaths$latitude), lng = as.numeric(new_deaths$longitude),clusterOptions = markerClusterOptions())
+  })
+  
+  output$life_death <- renderLeaflet({
+    leaflet() %>% 
+      addTiles() %>% addMarkers(lat = as.numeric(new_deaths$latitude), lng = as.numeric(new_deaths$longitude), icon = skulls, group = 'Deaths') %>% addMarkers(lat = as.numeric(admits$latitude), lng = as.numeric(admits$longitude), icon = redCross, group = 'Seeking Treatment') %>% 
+      addLayersControl(
+        baseGroups = c(),
+        overlayGroups = c("Deaths", "Seeking Treatment"),
+        options = layersControlOptions(collapsed = FALSE))
   })
   
   output$plot3 = renderPlotly({

@@ -24,11 +24,13 @@ fluidPage(
       plotOutput("distPlot"),
       h2('Map of Opioid Deaths in CT in 2014', align = 'center',
       leafletOutput("mymap")),
+      h4('Overlap Between Treatment Centers and Locations of Death', align = 'center'),
+      leafletOutput('life_death'),
       h3('Counts by Race and Gender', align = 'center'),
-      dataTableOutput('mytable1'),
-      plotlyOutput('plot2'),
-      p(),
-      plotlyOutput('plot3')
+      dataTableOutput('mytable1'),br(),
+      plotlyOutput('plot2'),br(),
+      plotlyOutput('plot4'),br(),
+      plotlyOutput('plot3'),br()
     )
   )
 )
