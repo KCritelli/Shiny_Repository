@@ -5,28 +5,30 @@
 fluidPage(
   
   # Application title
-  titlePanel("Deaths from Opioid Use by Age"),
+  titlePanel(h1('Opioid Deaths Across the United States in 2014', align = 'center')),
+  fluidRow(plotOutput('mapping')),
   
   # Sidebar with a slider input for the number of bins
   sidebarLayout(
-    sidebarPanel(
-      sliderInput("bins",
-                  "Number of bins:",
-                  min = 1,
-                  max = 50,
-                  value = 30)
+    sidebarPanel(sliderInput("bins",
+                             "Number of bins:",
+                             min = 1,
+                             max = 50,
+                             value = 30)
+
     ),
     
     # Show a plot of the generated distribution
-    mainPanel(
+    mainPanel( 
+      h3('Deaths from Opioid Use by Age', align = 'center'),
       plotOutput("distPlot"),
-      img(src = 'Mosaic.png', width = 700, height = 400),
+      h2('Map of Opioid Deaths in CT in 2014', align = 'center',
+      leafletOutput("mymap")),
+      h3('Counts by Race and Gender', align = 'center'),
+      dataTableOutput('mytable1'),
       plotlyOutput('plot2'),
-      leafletOutput("mymap"),
       p(),
-      actionButton("recalc", "New points"),
-      h2('Counts by Race and Gender'),
-        dataTableOutput('mytable1')
+      plotlyOutput('plot3')
     )
   )
 )
