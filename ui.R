@@ -21,8 +21,12 @@ fluidPage(
     mainPanel(
       plotOutput("distPlot"),
       img(src = 'Mosaic.png', width = 700, height = 400),
-      plotOutput('scatter'),
-      leafletOutput('mymap')
+      plotlyOutput('plot2'),
+      leafletOutput("mymap"),
+      p(),
+      actionButton("recalc", "New points"),
+      h2('Counts by Race and Gender'),
+        dataTableOutput('mytable1')
     )
   )
 )
