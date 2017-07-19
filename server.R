@@ -23,7 +23,7 @@ function(input, output) {
   })
   
   output$mytable1 = renderDataTable({
-    rb
+    race_breakdown
   })
   
   output$plot = renderPlotly({
